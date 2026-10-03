@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twin Flame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; width:100%; min-height:100%; background:#050917; overflow:hidden; }
+  body{ position:relative; min-height:100vh; font-family:'Cormorant Garamond',Georgia,serif; color:#ffe7b8; }
+
+  /* ---------- night sky ---------- */
+  .sky{ position:fixed; inset:0; z-index:0; overflow:hidden;
+    background:radial-gradient(90% 45% at 50% 100%,rgba(255,150,70,.22),transparent 70%),
+               linear-gradient(180deg,#03050f 0%,#091339 42%,#1a2862 72%,#3b3b7c 88%); }
+  .moon{ position:absolute; top:9vh; left:12vw; width:84px; height:84px; border-radius:50%;
+    background:radial-gradient(circle at 38% 36%,#fffef2,#f6ecc8 60%,#e3d49f);
+    box-shadow:0 0 40px 14px rgba(255,246,205,.45), 0 0 140px 60px rgba(190,205,255,.2); }
+  .moon::after{ content:""; position:absolute; inset:0; border-radius:50%;
+    background:radial-gradient(circle at 62% 30%,rgba(150,135,90,.28) 0 7%,transparent 8%),
+               radial-gradient(circle at 36% 66%,rgba(150,135,90,.24) 0 10%,transparent 11%),
+               radial-gradient(circle at 70% 68%,rgba(150,135,90,.2) 0 5%,transparent 6%); }
+  canvas#night{ position:fixed; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+
+  /* ---------- hills + lake ---------- */
+  .hills{ position:fixed; left:0; right:0; bottom:13vh; height:22vh; width:100%; z-index:2; display:block; }
+  .lake{ position:fixed; left:0; right:0; bottom:0; height:13vh; z-index:2; overflow:hidden;
+    background:linear-gradient(180deg,#16255a,#080e26); }
+  .lake::before{ content:""; position:absolute; inset:0; background:radial-gradient(60% 120% at 50% 0%,rgba(255,160,80,.22),transparent 70%); }
+  .lake i{ position:absolute; height:2px; border-radius:2px; opacity:0; animation:glint 3s ease-in-out infinite; }
+  @keyframes glint{ 0%,100%{ opacity:0; transform:scaleX(.3); } 50%{ opacity:.9; transform:scaleX(1); } }
+
+  /* ---------- open button (a lantern) ---------- */
+  .open-btn{ position:fixed; z-index:5; left:0; right:0; top:20vh; margin:0 auto; width:max-content; display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding:6px 18px 8px; border:none; background:none; cursor:pointer; color:#ffe7b8;
+    font:italic 600 clamp(21px,2.8vw,26px)/1 'Cormorant Garamond',Georgia,serif; text-shadow:0 0 16px rgba(255,170,70,.8);
+    animation:btnIn 1.2s .8s both, float 6s 2s ease-in-out infinite; transition:opacity .5s, visibility .5s; }
+  .open-btn svg{ width:80px; height:130px; filter:drop-shadow(0 0 18px rgba(255,160,60,.85)); transition:transform .4s, filter .4s; }
+  .open-btn:hover svg{ transform:scale(1.08); filter:drop-shadow(0 0 30px rgba(255,180,80,1)); }
+  .open-btn .flame{ animation:flick 1.6s ease-in-out infinite; transform-origin:40px 62px; }
+  .open-btn.hide{ opacity:0; visibility:hidden; pointer-events:none; animation:none; }
+  .open-btn:focus-visible,.close-btn:focus-visible{ outline:3px solid #ffd88a; outline-offset:4px; border-radius:14px; }
+  @keyframes btnIn{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+  @keyframes float{ 50%{ transform:translateY(-8px); } }
+  @keyframes flick{ 0%,100%{ opacity:1; transform:scale(1); } 45%{ opacity:.8; transform:scale(.92); } 70%{ opacity:.95; transform:scale(1.06); } }
+
+  /* ---------- atmosphere ---------- */
+  .aurora{ position:fixed; inset:0 0 40% 0; z-index:0; pointer-events:none; overflow:hidden; mix-blend-mode:screen; opacity:.6; }
+  .aurora i{ position:absolute; width:70vw; height:38vh; border-radius:50%; filter:blur(60px); animation:drift 24s ease-in-out infinite alternate; }
+  .aurora i:nth-child(1){ left:-10vw; top:6vh; background:rgba(255,110,120,.32); }
+  .aurora i:nth-child(2){ right:-15vw; top:14vh; background:rgba(90,120,255,.4); animation-duration:30s; animation-delay:-8s; }
+  .aurora i:nth-child(3){ left:25vw; top:-4vh; background:rgba(255,190,100,.22); animation-duration:36s; }
+  @keyframes drift{ to{ transform:translate3d(10vw,5vh,0) scale(1.25); } }
+  .mist{ position:fixed; left:0; right:0; bottom:12vh; height:18vh; z-index:2; pointer-events:none; background:linear-gradient(0deg,rgba(255,170,100,.2),transparent); filter:blur(8px); animation:breathe 9s ease-in-out infinite alternate; }
+  @keyframes breathe{ to{ opacity:.5; transform:translateY(-8px); } }
+  .moon-ref{ position:absolute; left:calc(12vw + 24px); top:0; width:36px; height:100%; background:linear-gradient(180deg,rgba(255,246,205,.6),transparent); filter:blur(5px); transform-origin:top; animation:shimmer 3.5s ease-in-out infinite alternate; }
+  @keyframes shimmer{ to{ transform:scaleX(1.6); opacity:.55; } }
+  .vignette{ position:fixed; inset:0; z-index:4; pointer-events:none; opacity:.3; transition:opacity 1.8s ease;
+    background:radial-gradient(70% 70% at 50% 50%,transparent 28%,rgba(2,4,14,.88)); }
+  body.opened .vignette{ opacity:1; }
+
+  /* ---------- message card ---------- */
+  main{ position:fixed; inset:0; z-index:6; display:grid; place-items:center; padding:16px; pointer-events:none; }
+  .card{ position:relative; width:100%; max-width:680px; pointer-events:auto; text-align:center; padding:0; border-radius:10px;
+    background:radial-gradient(80% 50% at 50% 0%,rgba(255,150,70,.22),transparent 70%),linear-gradient(165deg,#1b2557,#0a1031 60%,#060a22);
+    border:1px solid rgba(255,205,130,.6);
+    box-shadow:0 0 0 5px rgba(5,9,23,.7),0 0 0 6px rgba(255,205,130,.25),0 0 110px rgba(255,150,60,.35),0 30px 90px rgba(0,0,0,.7),inset 0 0 60px rgba(255,160,70,.08);
+    opacity:0; visibility:hidden; transform:translateY(30px) scale(.94);
+    transition:opacity 1s ease, transform 1.1s cubic-bezier(.2,.8,.2,1), visibility 0s 1.1s; }
+  .card::-webkit-scrollbar{ display:none; }
+  .card.open{ opacity:1; visibility:visible; transform:none; transition-delay:0s; }
+  .letter{ position:relative; padding:46px 60px 40px; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px); overflow-y:auto; scrollbar-width:none; border-radius:10px; }
+  .letter::-webkit-scrollbar{ display:none; }
+  .c{ position:absolute; width:36px; height:36px; color:#e9b872; opacity:.85; }
+  .c1{ top:14px; left:14px; } .c2{ top:14px; right:14px; transform:scaleX(-1); } .c3{ bottom:14px; left:14px; transform:scaleY(-1); } .c4{ bottom:14px; right:14px; transform:scale(-1); }
+  .emblem{ display:block; width:112px; height:112px; margin:0 auto 16px; overflow:visible; filter:drop-shadow(0 0 18px rgba(255,150,70,.65)); }
+  .spin{ transform-origin:60px 60px; animation:spin 40s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .fl{ transform-box:fill-box; transform-origin:50% 100%; animation:flick 1.8s ease-in-out infinite; }
+  .fl.b{ animation-delay:-.9s; }
+  .message{ margin:0; font-style:italic; font-weight:500; font-size:clamp(18px,2.3vw,22px); line-height:1.9; color:#f6e3bf; text-wrap:pretty; text-shadow:0 0 18px rgba(255,170,80,.25); }
+  .w{ display:inline-block; opacity:0; filter:blur(7px); transform:translateY(8px); transition:opacity .9s ease, filter .9s ease, transform .9s ease; }
+  .open .w{ opacity:1; filter:none; transform:none; transition-delay:calc(var(--i)*55ms + .9s); }
+  .divider{ display:block; width:200px; height:16px; margin:26px auto 14px; color:#e9b872; }
+  .divider.b{ margin:8px auto 20px; }
+  .sig{ margin:0; padding:.05em .25em .2em; font:400 clamp(38px,7vw,58px)/1.3 'Pinyon Script','Cormorant Garamond',cursive; background:linear-gradient(100deg,#ffe2a0,#ff9a4d 48%,#ff86b0); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,150,60,.5)); opacity:0; transform:scale(.96); transition:opacity 1.6s ease, transform 1.6s ease; }
+  .gift{ margin:0; font-style:italic; font-weight:600; font-size:clamp(20px,2.8vw,26px); line-height:1.4; color:#ffd88a; text-shadow:0 0 18px rgba(255,150,60,.5); opacity:0; transition:opacity 1.6s ease; }
+  .from{ margin:10px 0 0; font-style:italic; font-weight:500; font-size:clamp(16px,2vw,18px); color:#c9a77a; opacity:0; transition:opacity 1.6s ease; }
+  .open .sig{ opacity:1; transform:none; transition-delay:calc(var(--end) + .2s); }
+  .open .gift{ opacity:1; transition-delay:calc(var(--end) + 1.4s); }
+  .open .from{ opacity:1; transition-delay:calc(var(--end) + 2.2s); }
+  .close-btn{ position:absolute; top:-14px; right:-14px; z-index:3; width:36px; height:36px; border:1px solid rgba(233,184,114,.4); border-radius:50%; cursor:pointer; display:grid; place-items:center;
+    color:#ffe7b8; background:#0a1031; transition:background .2s, transform .2s; }
+  .close-btn:hover{ background:#1d2860; transform:rotate(90deg); }
+
+  /* ---------- player ---------- */
+  .player{ position:fixed; top:16px; right:16px; z-index:10; display:flex; align-items:center; gap:12px; max-width:290px; padding:8px 18px 8px 8px; border-radius:999px;
+    background:rgba(18,26,62,.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,220,160,.28); box-shadow:0 6px 24px rgba(0,0,0,.4); }
+  .play-btn{ flex:none; width:40px; height:40px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%,#ffd88a,#ff8a3d 60%,#e5541b); box-shadow:0 0 16px rgba(255,138,61,.55); }
+  .play-btn:focus-visible{ outline:3px solid #ffd88a; outline-offset:2px; }
+  .play-btn svg{ width:14px; height:14px; }
+  .play-btn .icon-pause{ display:none; }
+  .play-btn.playing .icon-play{ display:none; }
+  .play-btn.playing .icon-pause{ display:block; }
+  .track{ min-width:0; text-align:left; }
+  .track-title{ font-size:16px; font-weight:600; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .track-sub{ font-size:13px; font-style:italic; opacity:.75; margin-top:1px; }
+  .progress{ margin-top:6px; height:4px; border-radius:2px; background:rgba(255,231,184,.2); cursor:pointer; position:relative; }
+  .progress-fill{ position:absolute; inset:0 auto 0 0; width:0; border-radius:2px; background:linear-gradient(90deg,#ff8a3d,#ffd88a); pointer-events:none; }
+
+  @media (max-width:560px){
+    .player{ top:10px; right:10px; max-width:62vw; padding:6px 14px 6px 6px; }
+    .track-sub{ display:none; }
+    .moon{ width:60px; height:60px; left:8vw; top:11vh; }
+    .open-btn{ top:24vh; }
+    main{ padding:14px; }
+    .letter{ padding:26px 22px 26px; } .emblem{ width:84px; height:84px; } .moon-ref{ left:calc(8vw + 15px); width:30px; } .divider{ margin-top:18px; }
+  }
+  @media (max-height:720px){ .emblem{ width:72px; height:72px; margin-bottom:8px; } .message{ line-height:1.7; } .divider{ margin:14px auto 8px; } .letter{ padding-top:34px; padding-bottom:28px; } }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{ animation:none !important; }
+    .card{ transition:none !important; } .w,.sig,.from,.gift{ opacity:1 !important; filter:none !important; transform:none !important; transition:none !important; } .arc{ stroke-dashoffset:0 !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true"><div class="moon"></div></div>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<canvas id="night" aria-hidden="true"></canvas>
+
+<svg class="hills" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 120C150 60 300 100 450 80S800 40 1000 90S1150 70 1200 80V200H0Z" fill="#101c3f"/>
+  <path d="M0 150C200 110 380 150 600 130S1000 110 1200 140V200H0Z" fill="#080e26"/>
+  <path id="pines" fill="#050a1c"/>
+</svg>
+<div class="mist" aria-hidden="true"></div>
+<div class="lake" id="lake" aria-hidden="true"><div class="moon-ref"></div></div>
+<div class="vignette" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="corner" viewBox="0 0 44 44"><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M2 42V10C2 5 5 2 10 2h32"/><path d="M10 30V16c0-3 3-6 6-6h14"/><path d="M2 2l12 12"/></g><circle cx="16" cy="16" r="2" fill="currentColor"/></symbol></svg>
+
+<button class="open-btn" id="openBtn" type="button" aria-expanded="false" aria-controls="card">
+  <svg viewBox="0 0 80 130" aria-hidden="true">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".55" stop-color="#ffb347"/><stop offset="1" stop-color="#ff7a2a"/></linearGradient>
+    <radialGradient id="lglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffbe6"/><stop offset="1" stop-color="#fffbe6" stop-opacity="0"/></radialGradient></defs>
+    <path d="M40 0V16" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>
+    <rect x="25" y="15" width="30" height="8" rx="3" fill="#5a2a12"/>
+    <path d="M27 23C6 40 6 78 27 94H53C74 78 74 40 53 23Z" fill="url(#lg)"/>
+    <ellipse cx="40" cy="60" rx="22" ry="30" fill="url(#lglow)" opacity=".75"/>
+    <path d="M40 23V94M33 23C20 45 20 72 33 94M47 23C60 45 60 72 47 94" fill="none" stroke="rgba(120,50,10,.3)" stroke-width="1.2"/>
+    <ellipse class="flame" cx="40" cy="62" rx="6" ry="11" fill="#fff6d0"/>
+    <rect x="24" y="93" width="32" height="8" rx="3" fill="#5a2a12"/>
+    <path d="M40 101V112M40 118V129M40 118L36 127M40 118L44 127" stroke="#e8590c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <circle cx="40" cy="115" r="3" fill="#e8590c"/>
+  </svg>
+  Click me :3
+</button>
+
+<main>
+  <div class="card" id="card" role="dialog" aria-label="Pesan untuk Eden" aria-hidden="true">
+    <button class="close-btn" id="closeBtn" type="button" aria-label="Tutup pesan"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+    <div class="letter">
+      <svg class="c c1"><use href="#corner"/></svg><svg class="c c2"><use href="#corner"/></svg><svg class="c c3"><use href="#corner"/></svg><svg class="c c4"><use href="#corner"/></svg>
+      <svg class="emblem" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".5" stop-color="#ffb347"/><stop offset="1" stop-color="#ff6a1f"/></linearGradient>
+        <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3f0"/><stop offset=".5" stop-color="#ff86b0"/><stop offset="1" stop-color="#7a5cff"/></linearGradient></defs>
+        <g class="spin"><circle cx="60" cy="60" r="56" fill="none" stroke="#e9b872" stroke-opacity=".55" stroke-width="1.6" stroke-dasharray="1 5" stroke-linecap="round"/><circle cx="60" cy="4" r="2.6" fill="#ffd88a"/><circle cx="60" cy="116" r="2.6" fill="#ff9ac0"/></g>
+        <g transform="translate(47 94) rotate(-10)"><path class="fl" d="M0 -62C16 -36 22 -18 14 -2C9 8 -9 8 -14 -2C-22 -18 -16 -36 0 -62Z" fill="url(#ga)"/></g>
+        <g transform="translate(73 94) rotate(10)" style="mix-blend-mode:screen"><path class="fl b" d="M0 -62C16 -36 22 -18 14 -2C9 8 -9 8 -14 -2C-22 -18 -16 -36 0 -62Z" fill="url(#gb)"/></g>
+        <ellipse cx="60" cy="78" rx="5" ry="11" fill="#fff8dc" opacity=".9"/>
+      </svg>
+      <p class="message" id="msg">I've always loved the idea of twin flames, the belief that one soul was split into two, destined to find each other again no matter how many lifetimes or worlds stand between them. Whether it's true or not, I hope that in this roleplaying world,</p>
+      <svg class="divider" viewBox="0 0 200 16" fill="currentColor" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 8H80M120 8H200" fill="none"/><path d="M100 1l7 7-7 7-7-7z" stroke="none"/><circle cx="86" cy="8" r="1.8" stroke="none"/><circle cx="114" cy="8" r="1.8" stroke="none"/></svg>
+      <p class="sig">you're my twin flame, Eden.</p>
+      <svg class="divider b" viewBox="0 0 200 16" fill="currentColor" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 8H80M120 8H200" fill="none"/><path d="M100 1l7 7-7 7-7-7z" stroke="none"/><circle cx="86" cy="8" r="1.8" stroke="none"/><circle cx="114" cy="8" r="1.8" stroke="none"/></svg>
+      <p class="gift">gift from me for BF day, happy BF day</p>
+      <p class="from">from Sean (oWrath) to Eden (pTowa)</p>
+    </div>
+  </div>
+</main>
+
+<div class="player">
+  <button class="play-btn" id="playBtn" type="button" aria-label="Play Mystery of Love">
+    <svg class="icon-play" viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5z" fill="#fff"/></svg>
+    <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z" fill="#fff"/></svg>
+  </button>
+  <div class="track">
+    <div class="track-title">Mystery of Love</div>
+    <div class="track-sub">Sufjan Stevens</div>
+    <div class="progress" id="progress"><div class="progress-fill" id="fill"></div></div>
+  </div>
+</div>
+
+<audio id="audio" src="mystery-of-love.mp3" preload="auto" loop></audio>
+
+<script>
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // pine silhouettes + lake glints
+  (function(){
+    var d = '';
+    [60,96,134,176,1020,1062,1100,1146].forEach(function(x, i){
+      var y = 138 + (i % 3)*3, k = 1 + (i % 2)*.25;
+      d += 'M'+(x-15*k)+' '+y+'L'+x+' '+(y-52*k)+'L'+(x+15*k)+' '+y+'ZM'+(x-12*k)+' '+(y-26*k)+'L'+x+' '+(y-70*k)+'L'+(x+12*k)+' '+(y-26*k)+'Z';
+    });
+    document.getElementById('pines').setAttribute('d', d);
+    var lake = document.getElementById('lake');
+    function glints(n, l0, l1, color, w){
+      for(var i = 0; i < n; i++){
+        var s = document.createElement('i');
+        s.style.cssText = 'left:'+(l0 + Math.random()*(l1-l0))+'%;top:'+(8 + Math.random()*84)+'%;width:'+(w*(.5+Math.random()))+'px;background:'+color+
+          ';animation-delay:'+(-Math.random()*3)+'s;animation-duration:'+(2+Math.random()*2.5)+'s';
+        lake.appendChild(s);
+      }
+    }
+    glints(14, 4, 22, '#fff6d0', 26);
+    glints(18, 5, 95, '#ffb35e', 12);
+  })();
+
+  // stars, shooting stars and rising lanterns
+  (function(){
+    var canvas = document.getElementById('night'), ctx = canvas.getContext('2d');
+    var w, h, t = 0, stars = [], shoots = [], lanterns = [], flies = [];
+    var palette = ['#f5eee0','#ffe6b8','#dce8ff'];
+
+    function mkLantern(init, extra){
+      var s = 10 + Math.random()*18, bx = Math.random()*w;
+      return {s:s, bx:bx, x:bx, y:init ? Math.random()*h*.9 : h*(.8 + Math.random()*.16), sp:(.18 + Math.random()*.4)*(.5 + s/36),
+        ph:Math.random()*6.3, sw:6 + Math.random()*16, age:init ? 999 : 0, extra:!!extra};
+    }
+    function resize(){
+      w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight;
+      stars = [];
+      for(var i = 0, n = Math.floor(w*h/3200); i < n; i++){
+        var big = Math.random() < .06;
+        stars.push({x:Math.random()*w, y:Math.random()*h*.7, r:big ? 1.3 + Math.random()*1 : .4 + Math.random()*.9, big:big,
+          c:palette[Math.floor(Math.random()*3)], ph:Math.random()*6.3, sp:.5 + Math.random()*1.2});
+      }
+      var base = Math.max(14, Math.min(22, Math.floor(w/60)));
+      flies = []; lanterns = [];
+      for(var j = 0; j < base; j++) lanterns.push(mkLantern(true));
+    }
+    function star(s, a){
+      ctx.globalAlpha = a;
+      if(s.big){
+        var g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r*5);
+        g.addColorStop(0, s.c); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r*5, 0, 6.3); ctx.fill();
+      }
+      ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.3); ctx.fill();
+    }
+    function lantern(l, fl){
+      var depth = .45 + (l.s/36)*.55;
+      var a = depth*Math.min(1, l.age/80)*Math.max(0, Math.min(1, (l.y + l.s*2)/(h*.1)));
+      if(a <= 0) return;
+      ctx.save();
+      ctx.translate(l.x, l.y); ctx.rotate(Math.sin(t*.5 + l.ph)*.08);
+      var g = ctx.createRadialGradient(0, 0, 0, 0, 0, l.s*3.4);
+      g.addColorStop(0, 'rgba(255,175,70,'+(.42*fl*a)+')'); g.addColorStop(1, 'rgba(255,140,40,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, l.s*3.4, 0, 6.3); ctx.fill();
+      ctx.globalAlpha = a;
+      var z = l.s;
+      var b = ctx.createLinearGradient(0, -z*.5, 0, z*.5);
+      b.addColorStop(0, '#ffe9a8'); b.addColorStop(.55, '#ffb347'); b.addColorStop(1, '#ff7a2a');
+      ctx.fillStyle = b; ctx.beginPath(); ctx.moveTo(-z*.3, -z*.5);
+      ctx.bezierCurveTo(-z*.75, -z*.25, -z*.75, z*.25, -z*.34, z*.5); ctx.lineTo(z*.34, z*.5);
+      ctx.bezierCurveTo(z*.75, z*.25, z*.75, -z*.25, z*.3, -z*.5); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(120,50,10,.28)'; ctx.lineWidth = Math.max(.6, z*.03); ctx.beginPath();
+      ctx.moveTo(0, -z*.5); ctx.lineTo(0, z*.5);
+      ctx.moveTo(-z*.15, -z*.5); ctx.quadraticCurveTo(-z*.5, 0, -z*.17, z*.5);
+      ctx.moveTo(z*.15, -z*.5); ctx.quadraticCurveTo(z*.5, 0, z*.17, z*.5); ctx.stroke();
+      ctx.fillStyle = 'rgba(90,40,15,.9)'; ctx.fillRect(-z*.32, -z*.58, z*.64, z*.1); ctx.fillRect(-z*.36, z*.48, z*.72, z*.1);
+      ctx.strokeStyle = 'rgba(255,150,60,.7)'; ctx.beginPath(); ctx.moveTo(0, z*.58); ctx.lineTo(0, z*.85); ctx.stroke();
+      var fg2 = ctx.createRadialGradient(0, z*.02, 0, 0, z*.02, z*.36);
+      fg2.addColorStop(0, 'rgba(255,250,220,'+(.95*fl)+')'); fg2.addColorStop(1, 'rgba(255,230,160,0)');
+      ctx.fillStyle = fg2; ctx.beginPath(); ctx.arc(0, z*.02, z*.36, 0, 6.3); ctx.fill();
+      ctx.restore();
+    }
+    function frame(){
+      ctx.clearRect(0, 0, w, h);
+      for(var i = 0; i < stars.length; i++){
+        var s = stars[i], tw = .3 + .7*Math.sin(t*s.sp + s.ph);
+        star(s, Math.max(.08, tw)*(s.big ? .95 : .7));
+      }
+      if(Math.random() < .005 && shoots.length < 2){
+        shoots.push({x:Math.random()*w*.6 + w*.3, y:Math.random()*h*.22, vx:-(7 + Math.random()*5), vy:3.5 + Math.random()*2.5, life:0});
+      }
+      for(var j = shoots.length - 1; j >= 0; j--){
+        var sh = shoots[j];
+        ctx.globalAlpha = Math.max(0, 1 - sh.life/34);
+        var g = ctx.createLinearGradient(sh.x, sh.y, sh.x - sh.vx*6, sh.y - sh.vy*6);
+        g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(sh.x, sh.y); ctx.lineTo(sh.x - sh.vx*6, sh.y - sh.vy*6); ctx.stroke();
+        sh.x += sh.vx; sh.y += sh.vy; sh.life++;
+        if(sh.life > 34) shoots.splice(j, 1);
+      }
+      ctx.globalAlpha = 1;
+      if(!flies.length) for(var q = 0; q < 30; q++) flies.push({x:Math.random()*w, y:h*(.55 + Math.random()*.35), ph:Math.random()*6.3, sp:.3 + Math.random()*.6});
+      for(var f = 0; f < flies.length; f++){
+        var fl = flies[f], fa = Math.max(0, Math.sin(t*1.4 + fl.ph));
+        if(!reduceMotion){ fl.x += Math.sin(t*fl.sp + fl.ph)*.4; fl.y += Math.cos(t*fl.sp*.8 + fl.ph)*.25; }
+        var fg = ctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, 9);
+        fg.addColorStop(0, 'rgba(255,225,130,'+(.8*fa)+')'); fg.addColorStop(1, 'rgba(255,200,90,0)');
+        ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fl.x, fl.y, 9, 0, 6.3); ctx.fill();
+      }
+      for(var k = lanterns.length - 1; k >= 0; k--){
+        var l = lanterns[k];
+        if(!reduceMotion){
+          l.y -= l.sp; l.age++; l.x = l.bx + Math.sin(t*.4 + l.ph)*l.sw + (h - l.y)*.03;
+          if(l.y < -l.s*4){ if(l.extra) lanterns.splice(k, 1); else lanterns[k] = mkLantern(false); continue; }
+        }
+        lantern(l, .85 + .15*Math.sin(t*3 + l.ph*3));
+      }
+      ctx.globalAlpha = 1;
+      t += .02;
+      if(!reduceMotion) requestAnimationFrame(frame);
+    }
+    window.releaseLanterns = function(n){
+      for(var i = 0; i < n; i++){ var l = mkLantern(false, true); l.y = h*(.72 + Math.random()*.2); l.age = -i*10; lanterns.push(l); }
+    };
+    window.addEventListener('resize', resize);
+    resize(); frame();
+  })();
+
+  // audio player
+  (function(){
+    var audio = document.getElementById('audio'), btn = document.getElementById('playBtn');
+    var bar = document.getElementById('progress'), fill = document.getElementById('fill');
+    function setPlaying(on){ btn.classList.toggle('playing', on); btn.setAttribute('aria-label', (on ? 'Pause' : 'Play') + ' Mystery of Love'); }
+    btn.addEventListener('click', function(){
+      if(audio.paused){ var p = audio.play(); if(p && p.catch) p.catch(function(e){ console.error('Playback failed:', e); }); }
+      else audio.pause();
+    });
+    audio.addEventListener('play', function(){ setPlaying(true); });
+    audio.addEventListener('pause', function(){ setPlaying(false); });
+    audio.addEventListener('timeupdate', function(){ if(audio.duration) fill.style.width = (audio.currentTime/audio.duration*100) + '%'; });
+    bar.addEventListener('click', function(e){ var r = bar.getBoundingClientRect(); if(audio.duration) audio.currentTime = ((e.clientX - r.left)/r.width)*audio.duration; });
+  })();
+
+  // split message into words for a slow reveal
+  (function(){
+    var p = document.getElementById('msg'), txt = p.textContent.trim(), words = txt.split(/\s+/);
+    p.setAttribute('aria-label', txt);
+    p.innerHTML = words.map(function(w, i){ return '<span class="w" aria-hidden="true" style="--i:'+i+'">'+w+'</span>'; }).join(' ');
+    document.getElementById('card').style.setProperty('--end', (words.length*55 + 900) + 'ms');
+  })();
+
+  // open / close message
+  (function(){
+    var open = document.getElementById('openBtn'), card = document.getElementById('card'),
+        close = document.getElementById('closeBtn'), audio = document.getElementById('audio');
+    function show(){
+      card.classList.add('open'); document.body.classList.add('opened'); card.setAttribute('aria-hidden', 'false');
+      open.classList.add('hide'); open.setAttribute('aria-expanded', 'true');
+      if(audio.paused){ var p = audio.play(); if(p && p.catch) p.catch(function(){}); }
+      if(window.releaseLanterns && !reduceMotion) window.releaseLanterns(32);
+      setTimeout(function(){ close.focus({preventScroll:true}); }, 600);
+    }
+    function hide(){
+      card.classList.remove('open'); document.body.classList.remove('opened'); card.setAttribute('aria-hidden', 'true');
+      open.classList.remove('hide'); open.setAttribute('aria-expanded', 'false');
+      open.focus({preventScroll:true});
+    }
+    open.addEventListener('click', show);
+    close.addEventListener('click', hide);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && card.classList.contains('open')) hide(); });
+    document.addEventListener('click', function(e){
+      if(card.classList.contains('open') && !card.contains(e.target) && !open.contains(e.target) && !e.target.closest('.player')) hide();
+    });
+  })();
+</script>
+</body>
+</html>
